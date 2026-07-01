@@ -4,12 +4,12 @@ FROM eclipse-temurin:21-jdk-jammy AS builder
 WORKDIR /app
 
 # Copy Gradle wrapper and build files
-COPY gradlew .
-COPY gradle/ gradle/
+COPY gradlew gradlew.bat ./
+COPY gradle ./gradle
 COPY build.gradle settings.gradle ./
 
-# Grant execute permission to the Gradle wrapper
-RUN chmod +x gradlew
+# Grant execute permissions to Gradle wrapper and gradle directory
+RUN chmod +x gradlew && chmod -R +x gradle/wrapper
 
 # Copy module source code
 COPY api api/
