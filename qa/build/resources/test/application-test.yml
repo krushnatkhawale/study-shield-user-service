@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: study-shield-user-service-test
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/multimodal_test_db
+
+server:
+  port: 8080

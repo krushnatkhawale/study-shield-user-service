@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/api/build.gradle">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/api/build.gradle" />
+              <option name="originalContent" value="plugins {&#10;    id 'org.springframework.boot' version '3.3.5'&#10;    id 'io.spring.dependency-management' version '1.1.6'&#10;    id 'java'&#10;}&#10;&#10;group = 'com.studyshield'&#10;version = '0.0.1-SNAPSHOT'&#10;&#10;java {&#10;    sourceCompatibility = JavaVersion.VERSION_25&#10;    targetCompatibility = JavaVersion.VERSION_25&#10;}&#10;&#10;repositories {&#10;    mavenCentral()&#10;}&#10;&#10;dependencies {&#10;    implementation 'org.springframework.boot:spring-boot-starter-web'&#10;    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'&#10;    implementation 'org.springframework.boot:spring-boot-starter-actuator'&#10;    implementation 'org.springframework.boot:spring-boot-starter-validation'&#10;    &#10;    // Test dependencies&#10;    testImplementation 'org.springframework.boot:spring-boot-starter-test'&#10;    testImplementation 'org.springframework.boot:spring-boot-starter-webflux'&#10;}&#10;&#10;test {&#10;    useJUnitPlatform()&#10;}" />
+              <option name="updatedContent" value="plugins {&#10;    id 'org.springframework.boot' version '3.3.5'&#10;    id 'io.spring.dependency-management' version '1.1.6'&#10;    id 'java'&#10;}&#10;&#10;group = 'com.studyshield'&#10;version = '0.0.1-SNAPSHOT'&#10;&#10;java {&#10;    sourceCompatibility = JavaVersion.VERSION_21&#10;    targetCompatibility = JavaVersion.VERSION_21&#10;}&#10;&#10;repositories {&#10;    mavenCentral()&#10;}&#10;&#10;dependencies {&#10;    implementation 'org.springframework.boot:spring-boot-starter-web'&#10;    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'&#10;    implementation 'org.springframework.boot:spring-boot-starter-actuator'&#10;    implementation 'org.springframework.boot:spring-boot-starter-validation'&#10;    &#10;    // Test dependencies&#10;    testImplementation 'org.springframework.boot:spring-boot-starter-test'&#10;    testImplementation 'org.springframework.boot:spring-boot-starter-webflux'&#10;}&#10;&#10;test {&#10;    useJUnitPlatform()&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/qa/build.gradle">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/qa/build.gradle" />
+              <option name="originalContent" value="plugins {&#10;    id 'org.springframework.boot' version '3.1.0'&#10;    id 'io.spring.dependency-management' version '1.1.0'&#10;    id 'java'&#10;}&#10;&#10;group = 'com.studyshield'&#10;version = '0.0.1-SNAPSHOT'&#10;&#10;repositories {&#10;    mavenCentral()&#10;}&#10;&#10;dependencies {&#10;    implementation 'org.springframework.boot:spring-boot-starter-web'&#10;    implementation 'org.springframework.boot:spring-boot-starter-test'&#10;    &#10;    // Cucumber dependencies&#10;    testImplementation 'io.cucumber:cucumber-java:7.14.0'&#10;    testImplementation 'io.cucumber:cucumber-junit:7.14.0'&#10;    testImplementation 'io.cucumber:cucumber-spring:7.14.0'&#10;    testImplementation 'org.springframework.boot:spring-boot-starter-web'&#10;    &#10;    // For testing with REST Assured&#10;    testImplementation 'io.rest-assured:rest-assured:5.3.0'&#10;}&#10;&#10;test {&#10;    useJUnitPlatform()&#10;}" />
+              <option name="updatedContent" value="plugins {&#10;    id 'org.springframework.boot' version '3.3.5'&#10;    id 'io.spring.dependency-management' version '1.1.6'&#10;    id 'java'&#10;}&#10;&#10;group = 'com.studyshield'&#10;version = '0.0.1-SNAPSHOT'&#10;&#10;java {&#10;    sourceCompatibility = JavaVersion.VERSION_21&#10;    targetCompatibility = JavaVersion.VERSION_21&#10;}&#10;&#10;repositories {&#10;    mavenCentral()&#10;}&#10;&#10;dependencies {&#10;    implementation 'org.springframework.boot:spring-boot-starter-web'&#10;    implementation 'org.springframework.boot:spring-boot-starter-test'&#10;    &#10;    // Cucumber dependencies&#10;    testImplementation 'io.cucumber:cucumber-java:7.14.0'&#10;    testImplementation 'io.cucumber:cucumber-junit:7.14.0'&#10;    testImplementation 'io.cucumber:cucumber-spring:7.14.0'&#10;    testImplementation 'org.springframework.boot:spring-boot-starter-web'&#10;    &#10;    // For testing with REST Assured&#10;    testImplementation 'io.rest-assured:rest-assured:5.3.0'&#10;}&#10;&#10;springBoot {&#10;    mainClass = 'none'&#10;}&#10;&#10;tasks.bootJar.enabled = false&#10;tasks.bootRun.enabled = false&#10;&#10;test {&#10;    useJUnitPlatform()&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
