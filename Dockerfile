@@ -11,19 +11,20 @@ COPY build.gradle settings.gradle ./
 # Grant execute permission to the Gradle wrapper
 RUN chmod +x gradlew
 
-# Copy source code
-COPY src src/
+# Copy module source code
+COPY api api/
+COPY qa qa/
 
-# Build the application
-RUN ./gradlew bootJar --no-daemon
+# Build the API module
+RUN ./gradlew :api:bootJar --no-daemon
 
 # Create final minimal image
 FROM eclipse-temurin:21-jre-jammy
 
 WORKDIR /app
 
-# Copy the built JAR from the builder stage
-COPY --from=builder /app/build/libs/*.jar app.jar
+# Copy the built JAR from the API module builder stage
+COPY --from=builder /app/api/build/libs/*.jar app.jar
 
 # Expose port
 EXPOSE 8080
