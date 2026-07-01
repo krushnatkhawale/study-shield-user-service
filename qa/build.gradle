@@ -1,0 +1,42 @@
+plugins {
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
+    id 'java'
+}
+
+group = 'com.studyshield'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-test'
+    
+    // Cucumber dependencies
+    testImplementation 'io.cucumber:cucumber-java:7.14.0'
+    testImplementation 'io.cucumber:cucumber-junit:7.14.0'
+    testImplementation 'io.cucumber:cucumber-spring:7.14.0'
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
+    
+    // For testing with REST Assured
+    testImplementation 'io.rest-assured:rest-assured:5.3.0'
+}
+
+springBoot {
+    mainClass = 'none'
+}
+
+tasks.bootJar.enabled = false
+tasks.bootRun.enabled = false
+
+test {
+    useJUnitPlatform()
+}
