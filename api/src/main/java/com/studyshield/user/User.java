@@ -1,13 +1,16 @@
 package com.studyshield.user;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.util.UUID;
 
-@Document(collection = "users")
+@Entity
+@Table(name = "users")
 public class User {
     
     @Id
@@ -34,7 +37,14 @@ public class User {
         this.userId = userId;
     }
     
-    // Getters and Setters
+    @PrePersist
+    public void prePersist() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID().toString();
+        }
+    }
+
+    // ...existing code...
     public String getId() {
         return id;
     }
