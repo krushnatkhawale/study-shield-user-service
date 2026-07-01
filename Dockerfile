@@ -22,6 +22,15 @@ COPY api api/
 COPY qa qa/
 
 # Build the API module
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gradle ca-certificates gnupg2 dirmngr \
+    && gradle wrapper --gradle-version $(grep distributionUrl gradle/wrapper/gradle-wrapper.properties | sed -E 's/.*gradle-([0-9.\-a-zA-Z]+).*/\1/' ) || true \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get purge -y --auto-remove gradle || true
+
+# At this point the gradle/wrapper/gradle-wrapper.jar should exist. Run the
+# project build using the wrapper (preferred) so builds are consistent with
+# the project configuration.
 RUN ./gradlew :api:bootJar --no-daemon
 
 # Create final minimal image

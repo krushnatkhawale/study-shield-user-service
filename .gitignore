@@ -53,3 +53,6 @@ out/
 *key
 *.key
 *.pem
+
+# Allow committing the Gradle wrapper JAR (needed by CI/build hosts)
+!gradle/wrapper/gradle-wrapper.jar
