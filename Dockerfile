@@ -11,6 +11,12 @@ COPY build.gradle settings.gradle ./
 # Grant execute permissions to Gradle wrapper and gradle directory
 RUN chmod +x gradlew && chmod -R +x gradle/wrapper
 
+# Debug: List files in app directory and gradle wrapper directory
+RUN echo "=== Files in /app ===" && ls -la /app
+RUN echo "=== Files in /app/gradle ===" && ls -la /app/gradle
+RUN echo "=== Files in /app/gradle/wrapper ===" && ls -la /app/gradle/wrapper
+RUN echo "=== Checking if gradle-wrapper.jar exists ===" && test -f /app/gradle/wrapper/gradle-wrapper.jar && echo "gradle-wrapper.jar FOUND" || echo "gradle-wrapper.jar NOT FOUND"
+
 # Copy module source code
 COPY api api/
 COPY qa qa/
