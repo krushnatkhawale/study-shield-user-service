@@ -1,87 +1,92 @@
 package com.studyshield.user;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.PrePersist;
-import jakarta.validation.constraints.Email;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+    @Index(name = "idx_users_login_id", columnList = "login_id", unique = true)
+})
 public class User {
-    
+
     @Id
-    private String id;
-    
-    @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-    private String username;
-    
-    @Email(message = "Email should be valid")
-    private String email;
-    
-    @NotBlank(message = "User ID is required")
-    private String userId;
-    
-    private String authToken;
-    
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @NotBlank(message = "Email or phone is required")
+    @Column(name = "login_id", unique = true, nullable = false, length = 255)
+    private String loginId;
+
+    @NotBlank(message = "Password is required")
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
+
+    @Column(name = "created_at", updatable = false)
+    private Long createdAt;
+
+    @Column(name = "updated_at")
+    private Long updatedAt;
+
     // Constructors
     public User() {}
-    
-    public User(String username, String email, String userId) {
-        this.username = username;
-        this.email = email;
-        this.userId = userId;
-    }
-    
-    @PrePersist
-    public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID().toString();
-        }
+
+    public User(String loginId, String passwordHash) {
+        this.loginId = loginId;
+        this.passwordHash = passwordHash;
     }
 
-    // ...existing code...
-    public String getId() {
+    @PrePersist
+    protected void onCreate() {
+        long now = System.currentTimeMillis();
+        if (createdAt == null) createdAt = now;
+        if (updatedAt == null) updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = System.currentTimeMillis();
+    }
+
+    // Getters and setters
+    public UUID getId() {
         return id;
     }
-    
-    public void setId(String id) {
+
+    public void setId(UUID id) {
         this.id = id;
     }
-    
-    public String getUsername() {
-        return username;
+
+    public String getLoginId() {
+        return loginId;
     }
-    
-    public void setUsername(String username) {
-        this.username = username;
+
+    public void setLoginId(String loginId) {
+        this.loginId = loginId;
     }
-    
-    public String getEmail() {
-        return email;
+
+    public String getPasswordHash() {
+        return passwordHash;
     }
-    
-    public void setEmail(String email) {
-        this.email = email;
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
-    
-    public String getUserId() {
-        return userId;
+
+    public Long getCreatedAt() {
+        return createdAt;
     }
-    
-    public void setUserId(String userId) {
-        this.userId = userId;
+
+    public void setCreatedAt(Long createdAt) {
+        this.createdAt = createdAt;
     }
-    
-    public String getAuthToken() {
-        return authToken;
+
+    public Long getUpdatedAt() {
+        return updatedAt;
     }
-    
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
+
+    public void setUpdatedAt(Long updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }
