@@ -88,6 +88,14 @@ public class ParentSteps {
         assertTrue(parents.size() >= count, "Should have at least " + count + " parents");
     }
 
+    @When("I delete the parent")
+    public void iDeleteParent() {
+        String pid = state.parentId != null ? state.parentId : "00000000-0000-0000-0000-000000000000";
+        state.response = given().baseUri(baseUrl())
+                .header("Authorization", "Bearer " + state.sessionId)
+                .when().delete("/api/parents/" + pid);
+    }
+
     @Then("my name should be {string}")
     public void myNameShouldBe(String expectedName) {
         assertEquals(expectedName, state.response.jsonPath().getString("name"));

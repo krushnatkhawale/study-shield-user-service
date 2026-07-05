@@ -51,6 +51,28 @@ public class ParentService {
         return new ParentResponse(parent.getParentId(), parent.getAccountId(), parent.getName());
     }
 
+    public void deleteParent(UUID sessionId, UUID parentId) {
+        Session session = sessionRepository.findBySessionIdAndIsActiveTrue(sessionId)
+                .orElseThrow(() -> new RegistrationException("Invalid or expired session", "INVALID_SESSION"));
+
+        Parent parent = parentRepository.findById(parentId)
+                .orElseThrow(() -> new RegistrationException("Parent not found", "PARENT_NOT_FOUND"));
+
+        if (!parent.getAccountId().equals(session.getAccountId())) {
+            throw new RegistrationException("Parent does not belong to this account", "UNAUTHORIZED_ACCESS");
+        }
+
+        if (parent.getParentId().equals(session.getParentId())) {
+            throw new RegistrationException("Cannot delete the currently active parent", "CANNOT_DELETE_ACTIVE_PARENT");
+        }
+
+        if (parentRepository.countByAccountId(session.getAccountId()) <= 1) {
+            throw new RegistrationException("Cannot delete the last parent on the account", "CANNOT_DELETE_LAST_PARENT");
+        }
+
+        parentRepository.delete(parent);
+    }
+
     private String generateParentName() {
         return "awesome-parent-" + UUID.randomUUID().toString().substring(0, 6);
     }

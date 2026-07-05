@@ -76,6 +76,27 @@ public class ParentController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteParent(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable("id") UUID parentId) {
+        try {
+            UUID sessionId = extractSessionId(authHeader);
+            if (sessionId == null) {
+                return ResponseEntity.badRequest()
+                        .body(new AuthResponse("Invalid session ID format", "MISSING_SESSION_ID"));
+            }
+            parentService.deleteParent(sessionId, parentId);
+            return ResponseEntity.noContent().build();
+        } catch (RegistrationException e) {
+            if ("PARENT_NOT_FOUND".equals(e.getErrorCode())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new AuthResponse(e.getMessage(), e.getErrorCode()));
+        }
+    }
+
     private UUID extractSessionId(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
         try {

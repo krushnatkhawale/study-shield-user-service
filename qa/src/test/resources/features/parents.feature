@@ -39,3 +39,18 @@ Feature: Parent Management
   Scenario: Add parent without auth returns 400
     When I add a parent named "Bob"
     Then I should receive HTTP 400
+
+  @regression
+  Scenario: Delete a parent
+    Given I am signed in
+    When I add a parent named "Bob"
+    Then I should receive HTTP 201
+    When I delete the parent
+    Then I should receive HTTP 204
+    When I list all parents
+    Then I should see at least 1 parents
+
+  @regression
+  Scenario: Delete parent without auth returns 400
+    When I delete the parent
+    Then I should receive HTTP 400
