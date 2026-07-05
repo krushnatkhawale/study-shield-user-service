@@ -112,6 +112,61 @@ public class AccountService {
         return new AuthResponse(parentSummaries, "Multiple parents found. Please select a parent.");
     }
 
+    public AuthResponse authenticateGuest(String deviceId) {
+        Optional<Account> existingAccount = accountRepository.findByLoginId(deviceId);
+
+        if (existingAccount.isPresent()) {
+            Account account = existingAccount.get();
+            long parentCount = parentRepository.countByAccountId(account.getAccountId());
+
+            if (parentCount == 1) {
+                Parent parent = parentRepository.findByAccountId(account.getAccountId()).get(0);
+                UUID sessionId = UUID.randomUUID();
+                Long expirationTime = System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000);
+                Session session = new Session(account.getAccountId(), parent.getParentId(), sessionId, expirationTime);
+                sessionRepository.save(session);
+
+                return new AuthResponse(
+                        account.getAccountId(),
+                        account.getLoginId(),
+                        sessionId,
+                        parent.getParentId(),
+                        parent.getName(),
+                        "Sign in successful"
+                );
+            }
+
+            List<AuthResponse.ParentSummary> parentSummaries = parentRepository.findByAccountId(account.getAccountId())
+                    .stream()
+                    .map(p -> new AuthResponse.ParentSummary(p.getParentId(), p.getName()))
+                    .collect(Collectors.toList());
+
+            return new AuthResponse(parentSummaries, "Multiple parents found. Please select a parent.");
+        }
+
+        Account account = new Account(deviceId, UUID.randomUUID().toString());
+        Account savedAccount = accountRepository.save(account);
+
+        String parentName = generateParentName();
+        UUID parentId = UUID.randomUUID();
+        Parent parent = new Parent(parentId, savedAccount.getAccountId(), parentName);
+        parentRepository.save(parent);
+
+        UUID sessionId = UUID.randomUUID();
+        Long expirationTime = System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000);
+        Session session = new Session(savedAccount.getAccountId(), parentId, sessionId, expirationTime);
+        sessionRepository.save(session);
+
+        return new AuthResponse(
+                savedAccount.getAccountId(),
+                savedAccount.getLoginId(),
+                sessionId,
+                parentId,
+                parentName,
+                "Sign up successful"
+        );
+    }
+
     public AuthResponse signOut(UUID sessionId) {
         Session session = sessionRepository.findBySessionIdAndIsActiveTrue(sessionId)
                 .orElseThrow(() -> new RegistrationException("Invalid or expired session", "INVALID_SESSION"));

@@ -48,13 +48,22 @@ public class AuthController {
     @PostMapping("/signin")
     public ResponseEntity<AuthResponse> authenticateUser(@RequestBody SignInRequest request) {
         try {
-            if (request.getLoginId() == null || request.getLoginId().isEmpty()
-                    || request.getPassword() == null || request.getPassword().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new AuthResponse("Email/phone and password required", "MISSING_FIELDS"));
+            AuthResponse response;
+            if (request.isGuest()) {
+                if (request.getLoginId() == null || request.getLoginId().isEmpty()) {
+                    return ResponseEntity.badRequest()
+                            .body(new AuthResponse("Device ID required for guest sign-in", "MISSING_FIELDS"));
+                }
+                response = accountService.authenticateGuest(request.getLoginId());
+            } else {
+                if (request.getLoginId() == null || request.getLoginId().isEmpty()
+                        || request.getPassword() == null || request.getPassword().isEmpty()) {
+                    return ResponseEntity.badRequest()
+                            .body(new AuthResponse("Email/phone and password required", "MISSING_FIELDS"));
+                }
+                response = accountService.authenticateUser(
+                        request.getLoginId(), request.getPassword(), request.getParentId());
             }
-            AuthResponse response = accountService.authenticateUser(
-                    request.getLoginId(), request.getPassword(), request.getParentId());
 
             log.info("User '{}' signed in", response.getLoginId() != null ? response.getLoginId() : request.getLoginId());
 
