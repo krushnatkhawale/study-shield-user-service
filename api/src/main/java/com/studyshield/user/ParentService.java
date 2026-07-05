@@ -26,7 +26,7 @@ public class ParentService {
         UUID parentId = UUID.randomUUID();
         Parent parent = new Parent(parentId, session.getAccountId(), parentName);
         parentRepository.save(parent);
-        return new ParentResponse(parentId, session.getAccountId(), parentName);
+        return new ParentResponse(parentId, session.getAccountId(), parentName, null);
     }
 
     public List<ParentResponse> listParents(UUID sessionId) {
@@ -35,7 +35,7 @@ public class ParentService {
 
         return parentRepository.findByAccountId(session.getAccountId())
                 .stream()
-                .map(p -> new ParentResponse(p.getParentId(), p.getAccountId(), p.getName()))
+                .map(p -> new ParentResponse(p.getParentId(), p.getAccountId(), p.getName(), p.getParentType()))
                 .collect(Collectors.toList());
     }
 
@@ -48,7 +48,7 @@ public class ParentService {
 
         parent.setName(newName.trim());
         parentRepository.save(parent);
-        return new ParentResponse(parent.getParentId(), parent.getAccountId(), parent.getName());
+        return new ParentResponse(parent.getParentId(), parent.getAccountId(), parent.getName(), parent.getParentType());
     }
 
     public void deleteParent(UUID sessionId, UUID parentId) {
@@ -60,6 +60,10 @@ public class ParentService {
 
         if (!parent.getAccountId().equals(session.getAccountId())) {
             throw new RegistrationException("Parent does not belong to this account", "UNAUTHORIZED_ACCESS");
+        }
+
+        if ("default".equals(parent.getParentType())) {
+            throw new RegistrationException("Cannot delete the default parent", "CANNOT_DELETE_DEFAULT_PARENT");
         }
 
         if (parent.getParentId().equals(session.getParentId())) {

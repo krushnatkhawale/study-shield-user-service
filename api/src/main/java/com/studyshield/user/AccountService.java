@@ -40,7 +40,7 @@ public class AccountService {
                 ? name.trim()
                 : generateParentName();
         UUID parentId = UUID.randomUUID();
-        Parent parent = new Parent(parentId, savedAccount.getAccountId(), parentName);
+        Parent parent = new Parent(parentId, savedAccount.getAccountId(), parentName, "default");
         parentRepository.save(parent);
 
         UUID sessionId = UUID.randomUUID();
@@ -149,7 +149,7 @@ public class AccountService {
 
         String parentName = generateParentName();
         UUID parentId = UUID.randomUUID();
-        Parent parent = new Parent(parentId, savedAccount.getAccountId(), parentName);
+        Parent parent = new Parent(parentId, savedAccount.getAccountId(), parentName, "default");
         parentRepository.save(parent);
 
         UUID sessionId = UUID.randomUUID();

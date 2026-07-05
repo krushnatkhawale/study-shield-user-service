@@ -19,6 +19,9 @@ public class Parent {
     @Column(name = "name", length = 100)
     private String name;
 
+    @Column(name = "parent_type", length = 20)
+    private String parentType;
+
     @Column(name = "created_at", updatable = false)
     private Long createdAt;
 
@@ -31,6 +34,13 @@ public class Parent {
         this.parentId = parentId;
         this.accountId = accountId;
         this.name = name;
+    }
+
+    public Parent(UUID parentId, UUID accountId, String name, String parentType) {
+        this.parentId = parentId;
+        this.accountId = accountId;
+        this.name = name;
+        this.parentType = parentType;
     }
 
     @PrePersist
@@ -51,6 +61,8 @@ public class Parent {
     public void setAccountId(UUID accountId) { this.accountId = accountId; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getParentType() { return parentType; }
+    public void setParentType(String parentType) { this.parentType = parentType; }
     public Long getCreatedAt() { return createdAt; }
     public void setCreatedAt(Long createdAt) { this.createdAt = createdAt; }
     public Long getUpdatedAt() { return updatedAt; }
