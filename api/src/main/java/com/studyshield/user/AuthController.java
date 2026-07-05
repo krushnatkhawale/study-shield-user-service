@@ -1,5 +1,7 @@
 package com.studyshield.user;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AccountService accountService;
@@ -52,6 +56,8 @@ public class AuthController {
             AuthResponse response = accountService.authenticateUser(
                     request.getLoginId(), request.getPassword(), request.getParentId());
 
+            log.info("User '{}' signed in", response.getLoginId() != null ? response.getLoginId() : request.getLoginId());
+
             if (response.isRequiresParentSelection()) {
                 return ResponseEntity.ok(response);
             }
@@ -87,6 +93,7 @@ public class AuthController {
                         .body(new AuthResponse("Session ID required", "MISSING_SESSION_ID"));
             }
             AuthResponse response = accountService.signOut(sessionId);
+            log.info("User '{}' signed out", response.getLoginId() != null ? response.getLoginId() : sessionId);
             return ResponseEntity.ok(response);
         } catch (RegistrationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
