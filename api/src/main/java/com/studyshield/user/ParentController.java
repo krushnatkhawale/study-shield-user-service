@@ -1,5 +1,7 @@
 package com.studyshield.user;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/parents")
 public class ParentController {
+
+    private static final Logger log = LoggerFactory.getLogger(ParentController.class);
 
     @Autowired
     private ParentService parentService;
@@ -26,6 +30,7 @@ public class ParentController {
                         .body(new AuthResponse("Invalid session ID format", "MISSING_SESSION_ID"));
             }
             ParentResponse response = parentService.addParent(sessionId, request.getName());
+            log.info("Parent '{}' added", response.getName());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RegistrationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -87,6 +92,7 @@ public class ParentController {
                         .body(new AuthResponse("Invalid session ID format", "MISSING_SESSION_ID"));
             }
             parentService.deleteParent(sessionId, parentId);
+            log.info("Parent '{}' deleted", parentId);
             return ResponseEntity.noContent().build();
         } catch (RegistrationException e) {
             if ("PARENT_NOT_FOUND".equals(e.getErrorCode())) {

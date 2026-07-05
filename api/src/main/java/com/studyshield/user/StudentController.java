@@ -1,5 +1,7 @@
 package com.studyshield.user;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/students")
 public class StudentController {
+
+    private static final Logger log = LoggerFactory.getLogger(StudentController.class);
 
     @Autowired
     private StudentService studentService;
@@ -26,6 +30,7 @@ public class StudentController {
                         .body(new StudentResponse());
             }
             StudentResponse response = studentService.addStudent(sessionId, request);
+            log.info("Student '{}' added", response.getName());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RegistrationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -81,6 +86,7 @@ public class StudentController {
                 return ResponseEntity.badRequest().build();
             }
             studentService.deleteStudent(sessionId, studentId);
+            log.info("Student '{}' deleted", studentId);
             return ResponseEntity.noContent().build();
         } catch (RegistrationException e) {
             if ("STUDENT_NOT_FOUND".equals(e.getErrorCode())) {

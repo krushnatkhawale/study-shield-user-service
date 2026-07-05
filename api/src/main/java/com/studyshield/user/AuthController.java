@@ -31,6 +31,7 @@ public class AuthController {
             }
             AuthResponse response = accountService.registerUser(
                     request.getLoginId(), request.getPassword(), request.getName());
+            log.info("User '{}' signed up", request.getLoginId());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (RegistrationException e) {
             if ("EMAIL_PHONE_EXISTS".equals(e.getErrorCode())) {
@@ -131,6 +132,7 @@ public class AuthController {
                                 "Invalid Authorization header format", "BAD_HEADER"));
             }
             ValidationResponse response = accountService.validateSession(sessionId);
+            log.info("Session validated for user '{}'", response.getLoginId());
             return ResponseEntity.ok(response);
         } catch (RegistrationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
