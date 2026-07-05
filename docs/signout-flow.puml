@@ -1,9 +1,9 @@
 @startuml
-title US-003: User Sign-Out Flow
+title US-003: Sign-Out Flow
 
 actor "Client" as client
-participant "UserController" as ctrl
-participant "UserService" as svc
+participant "AuthController" as ctrl
+participant "AccountService" as svc
 database "Database" as db
 
 == Request Parsing ==
@@ -27,7 +27,7 @@ end
 svc -> db: set isActive = false\nsessionRepository.save(session)
 
 == Response ==
-svc --> ctrl: void (success)
+svc --> ctrl: AuthResponse (message only)
 ctrl --> client: 200 OK\n{ message: "Sign out successful" }
 
 note right of db: Soft delete —\nsession history preserved

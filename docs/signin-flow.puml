@@ -1,14 +1,14 @@
 @startuml
-title US-002: User Sign-In Flow
+title US-002: Account Sign-In Flow
 
 actor "Client" as client
-participant "UserController" as ctrl
-participant "UserService" as svc
+participant "AuthController" as ctrl
+participant "AccountService" as svc
 participant "PasswordUtil" as pwd
 database "Database" as db
 
 == Validation ==
-client -> ctrl: POST /api/auth/signin\n{ loginId, password }
+client -> ctrl: POST /api/auth/signin\n{ loginId, password, parentId? }
 ctrl -> ctrl: Validate loginId and password present
 
 alt Missing fields
@@ -16,7 +16,7 @@ alt Missing fields
 end
 
 == Authentication ==
-ctrl -> svc: authenticateUser(loginId, password)
+ctrl -> svc: authenticateUser(loginId, password, parentId)
 svc -> db: findByLoginId(loginId)
 
 alt User not found
@@ -32,12 +32,25 @@ alt Password mismatch
     ctrl --> client: 401 Unauthorized\n(generic message)
 end
 
+== Parent Resolution ==
+alt parentId provided
+    svc -> db: findByParentIdAndAccountId(parentId, accountId)
+    svc -> svc: Create session for selected parent
+else 1 parent in account
+    svc -> db: countByAccountId(accountId)
+    svc -> svc: Auto-select sole parent, create session
+else 2+ parents, no parentId
+    svc -> db: findByAccountId(accountId)
+    svc --> ctrl: Parent list\n{ requiresParentSelection: true }
+    ctrl --> client: 200 OK\n{ requiresParentSelection, parents[] }
+end
+
 == Session Creation ==
 svc -> svc: Generate new UUID sessionId
-svc -> db: save(Session{sessionId, userId, expiresAt+30d})
+svc -> db: save(Session{sessionId, accountId, parentId, expiresAt+30d})
 
 == Response ==
-svc --> ctrl: SessionResponse
-ctrl --> client: 200 OK\n{ userId, loginId, sessionId, message }
+svc --> ctrl: AuthResponse
+ctrl --> client: 200 OK\n{ accountId, parentId, parentName, sessionId, loginId }
 
 @enduml

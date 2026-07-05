@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(RegistrationException.class)
-    public ResponseEntity<SessionResponse> handleRegistrationException(RegistrationException e) {
+    public ResponseEntity<AuthResponse> handleRegistrationException(RegistrationException e) {
         HttpStatus status;
         switch (e.getErrorCode()) {
             case "EMAIL_PHONE_EXISTS":
@@ -26,16 +26,20 @@ public class GlobalExceptionHandler {
             case "INVALID_SESSION":
                 status = HttpStatus.UNAUTHORIZED;
                 break;
+            case "STUDENT_NOT_FOUND":
+            case "PARENT_NOT_FOUND":
+                status = HttpStatus.NOT_FOUND;
+                break;
             default:
                 status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         return ResponseEntity.status(status)
-                .body(new SessionResponse(null, null, null, e.getMessage(), e.getErrorCode()));
+                .body(new AuthResponse(e.getMessage(), e.getErrorCode()));
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<SessionResponse> handleRuntimeException(RuntimeException e) {
+    public ResponseEntity<AuthResponse> handleRuntimeException(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new SessionResponse(null, null, null, "Internal server error", "INTERNAL_ERROR"));
+                .body(new AuthResponse("Internal server error", "INTERNAL_ERROR"));
     }
 }

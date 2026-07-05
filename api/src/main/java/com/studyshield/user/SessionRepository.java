@@ -8,7 +8,6 @@ import java.util.UUID;
 
 @Repository
 public interface SessionRepository extends JpaRepository<Session, UUID> {
-    Optional<Session> findByUserId(UUID userId);
     Optional<Session> findBySessionIdAndIsActiveTrue(UUID sessionId);
     Optional<Session> findBySessionIdAndIsActiveTrueAndExpiresAtAfter(UUID sessionId, Long now);
 }

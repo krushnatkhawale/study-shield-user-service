@@ -1,14 +1,14 @@
 @startuml
-title US-001: User Sign-Up Flow
+title US-001: Account Sign-Up Flow
 
 actor "Client" as client
-participant "UserController" as ctrl
-participant "UserService" as svc
+participant "AuthController" as ctrl
+participant "AccountService" as svc
 participant "PasswordUtil" as pwd
 database "Database" as db
 
 == Validation ==
-client -> ctrl: POST /api/auth/signup\n{ loginId, password }
+client -> ctrl: POST /api/auth/signup\n{ loginId, password, name? }
 ctrl -> ctrl: Validate fields present
 ctrl -> ctrl: Validate password >= 6 chars
 
@@ -17,7 +17,7 @@ alt Missing / Invalid fields
 end
 
 == Business Logic ==
-ctrl -> svc: registerUser(loginId, password)
+ctrl -> svc: registerUser(loginId, password, name)
 svc -> db: findByLoginId(loginId)
 
 alt loginId already exists
@@ -27,14 +27,15 @@ end
 
 svc -> pwd: encodePassword(password)
 pwd --> svc: BCrypt hash
-svc -> db: save(User{loginId, passwordHash})
-db --> svc: savedUser (with UUID id)
+svc -> db: save(Account{loginId, passwordHash})
+db --> svc: savedAccount (with UUID accountId)
+svc -> svc: Generate UUID parentId\n(generate name if omitted)
+svc -> db: save(Parent{parentId, accountId, name})
 svc -> svc: Generate UUID sessionId
-svc -> db: save(Session{sessionId, userId, expiresAt+30d})
-db --> svc: session saved
+svc -> db: save(Session{sessionId, accountId, parentId, expiresAt+30d})
 
 == Response ==
-svc --> ctrl: SessionResponse
-ctrl --> client: 201 Created\n{ userId, loginId, sessionId, message }
+svc --> ctrl: AuthResponse
+ctrl --> client: 201 Created\n{ accountId, parentId, parentName, sessionId, loginId }
 
 @enduml

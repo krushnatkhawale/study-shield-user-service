@@ -2,8 +2,8 @@
 title US-004: Session Validation Flow
 
 actor "Client" as client
-participant "UserController" as ctrl
-participant "UserService" as svc
+participant "AuthController" as ctrl
+participant "AccountService" as svc
 database "Database" as db
 
 == Request ==
@@ -30,11 +30,12 @@ alt Not found (invalid / expired / inactive)
     ctrl --> client: 401 Unauthorized\n{ errorCode, message }
 end
 
-svc -> db: findById(session.userId)
+svc -> db: findById(session.accountId)
+svc -> db: findById(session.parentId)
 
 == Response ==
-svc --> ctrl: ValidationResponse{userId, loginId, isValid=true}
-ctrl --> client: 200 OK\n{ userId, loginId, isValid, message }
+svc --> ctrl: ValidationResponse{accountId, loginId, parentId, parentName, isValid=true}
+ctrl --> client: 200 OK\n{ accountId, loginId, parentId, parentName, isValid, message }
 
 note right of db: Checks:\n1. sessionId exists\n2. is_active = true\n3. expires_at > now
 

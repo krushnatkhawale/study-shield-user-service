@@ -99,20 +99,23 @@ Key features implemented:
 
 ## Testing
 
-To build the application:
+### Unit / Integration Tests
+
+To build and run unit/integration tests (inside the `api` module):
 ```
 ./gradlew build
+./gradlew :api:test
 ```
 
-To run tests:
-```
-./gradlew test
-```
+### Running the Application
 
-To run the application:
 ```
 ./gradlew bootRun
 ```
 
 The API is accessible at http://localhost:8080
 H2 Console for database inspection: http://localhost:8080/h2-console
+
+### QA Acceptance Tests
+
+The `qa` module contains Cucumber-based acceptance tests. See [qa/README.md](qa/README.md) for details.

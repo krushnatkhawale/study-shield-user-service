@@ -1,10 +1,10 @@
 @startuml
-title Database Schema — Users & Sessions
+title Database Schema — Accounts, Parents, Students & Sessions
 
 !define table(x) entity x <<table>>
 
-table(users) {
-  * id : UUID <<PK>>
+table(accounts) {
+  * account_id : UUID <<PK>>
   --
   * login_id : VARCHAR(255) <<UNIQUE, INDEX>>
   * password_hash : VARCHAR(255)
@@ -12,18 +12,45 @@ table(users) {
   updated_at : BIGINT
 }
 
+table(parents) {
+  * parent_id : UUID <<PK>>
+  --
+  * account_id : UUID <<FK, INDEX>>
+  name : VARCHAR(100)
+  created_at : BIGINT
+  updated_at : BIGINT
+}
+
+table(students) {
+  * student_id : UUID <<PK>>
+  --
+  * account_id : UUID <<FK, INDEX>>
+  * name : VARCHAR(100)
+  gender : VARCHAR(10)
+  birth_year : INT
+  class : VARCHAR(50)
+  created_at : BIGINT
+  updated_at : BIGINT
+}
+
 table(sessions) {
   * session_id : UUID <<PK, INDEX>>
   --
-  * user_id : UUID <<FK, INDEX>>
+  * account_id : UUID <<FK, INDEX>>
+  * parent_id : UUID <<FK, INDEX>>
   * is_active : BOOLEAN <<INDEX>> (default true)
   created_at : BIGINT
   * expires_at : BIGINT <<INDEX>>
 }
 
-users ||--o{ sessions : "user_id → id"
+accounts ||--o{ parents : "account_id → account_id"
+accounts ||--o{ students : "account_id → account_id"
+accounts ||--o{ sessions : "account_id → account_id"
+parents ||--o{ sessions : "parent_id → parent_id"
 
-note top of users : @Entity\n@Table(name = "users")
+note top of accounts : @Entity\n@Table(name = "accounts")
+note top of parents : @Entity\n@Table(name = "parents")
+note top of students : @Entity\n@Table(name = "students")
 note top of sessions : @Entity\n@Table(name = "sessions")
 note right of sessions : is_active = false means\nsession is invalidated\n(soft delete)
 

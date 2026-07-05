@@ -1,44 +1,64 @@
 # System Architecture
 
+## Domain Model
+
+```
+Account (loginId, passwordHash)
+    │
+    ├── Parent (name, ...)  ← one or more per account
+    │       │
+    │       └── Session (tied to a specific parent)
+    │
+    └── Student (name, gender, birthYear, class)  ← multiple per account
+```
+
 ## Layer Overview
 
 ```
-┌─────────────────────────────────────┐
-│         Client Layer                │
-│  Mobile App (Android/iOS)           │
-│  Web App (React/Angular)            │
-└──────────────┬──────────────────────┘
-               │ HTTP REST (/api/auth/*)
-               ▼
-┌─────────────────────────────────────┐
-│         API Gateway                 │
-│  ┌─────────────────────────────┐    │
-│  │  Spring Boot API (port 8080)│    │
-│  │  CORS Filter                │    │
-│  │  Security Filter            │    │
-│  └──────────┬──────────────────┘    │
-└──────────────┼──────────────────────┘
-               │ @RestController
-               ▼
-┌─────────────────────────────────────┐
-│         Business Logic              │
-│  ┌─────────────────────────────┐    │
-│  │  UserController             │    │
-│  │  UserService                │    │
-│  │  PasswordUtil (BCrypt)      │    │
-│  │  GlobalExceptionHandler     │    │
-│  └──────┬──────────────────────┘    │
-└─────────┼───────────────────────────┘
-          │ JPA / Hibernate
-          ▼
-┌─────────────────────────────────────┐
-│         Data Layer                  │
-│  ┌─────────────────────────────┐    │
-│  │  H2 / PostgreSQL (database) │    │
-│  │  ├── users table            │    │
-│  │  └── sessions table         │    │
-│  └─────────────────────────────┘    │
-└─────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│                     Client Layer                            │
+│   Mobile App (Android/iOS)    Web App (React/Angular)       │
+└────────────────────────────┬───────────────────────────────┘
+                             │ HTTP REST
+                             ▼
+┌────────────────────────────────────────────────────────────┐
+│                   API Gateway (Port 8080)                   │
+│   ┌──────────────┐  ┌──────────────────────────┐           │
+│   │ CORS Filter   │  │  Security Filter Chain   │           │
+│   └──────────────┘  └──────────────────────────┘           │
+└────────────────────────────┬───────────────────────────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+┌─────────────────────┐ ┌──────────┐ ┌──────────────┐
+│   AuthController    │ │ParentCtlr│ │StudentCtlr   │
+│   /api/auth/*       │ │/api/parents │ /api/students│
+└──────────┬──────────┘ └────┬─────┘ └──────┬───────┘
+           │                 │              │
+           ▼                 ▼              ▼
+┌────────────────────────────────────────────────────────────┐
+│                   Business Logic Layer                      │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│   │AccountService│  │ParentService │  │StudentService│    │
+│   └──────┬───────┘  └──────────────┘  └──────────────┘    │
+│          │                                                 │
+│   ┌──────┴──────────────┐                                  │
+│   │   PasswordUtil      │  ← BCrypt (10 rounds)            │
+│   └─────────────────────┘                                  │
+│                                                             │
+│   ┌─────────────────────────────────────┐                   │
+│   │ GlobalExceptionHandler (@ControllerAdvice)              │
+│   └─────────────────────────────────────┘                   │
+└────────────────────────────┬───────────────────────────────┘
+                             │ JPA / Hibernate
+                             ▼
+┌────────────────────────────────────────────────────────────┐
+│                     Data Layer                              │
+│   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│   │ accounts │  │ parents  │  │ students │  │ sessions │ │
+│   └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
+│              H2 (dev) / PostgreSQL (prod)                  │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ## Modules
@@ -48,86 +68,133 @@
 
 ## Request Flow
 
-1. Client sends HTTP request to `/api/auth/*`
+1. Client sends HTTP request to any API endpoint
 2. `CORS Filter` handles cross-origin requests (all origins allowed)
-3. `Security Filter` applies security headers (X-Content-Type-Options, X-Frame-Options, etc.)
-4. Spring Security permits all requests to `/api/auth/**` (no authentication required for auth endpoints)
-5. `UserController` receives the request and delegates to `UserService`
-6. `UserService` performs business logic (register, authenticate, sign out, validate)
-7. `PasswordUtil` handles BCrypt hashing/verification (10 salt rounds)
-8. `UserRepository` / `SessionRepository` persist/query data via JPA/Hibernate
+3. `Security Filter` applies security headers (`X-Content-Type-Options`, `X-Frame-Options`)
+4. Spring Security permits `/api/auth/**`, `/api/parents/**`, `/api/students/**`, `/api/config/**`, Swagger UI, H2 console
+5. The controller receives the request and delegates to the appropriate service
+6. Auth-protected endpoints extract Bearer token from `Authorization` header and validate the session manually
+7. Service performs business logic using JPA repositories
+8. `PasswordUtil` handles BCrypt hashing/verification (10 salt rounds)
 9. `GlobalExceptionHandler` catches exceptions and returns consistent JSON error responses
 
 ## Data Flow by Endpoint
 
 ### POST /api/auth/signup
 ```
-Client → signup(loginId, password) → UserService.registerUser()
-  → PasswordUtil.hashPassword() → BCrypt 10 rounds
-  → UserRepository.save() → INSERT INTO users
+Client → AuthController → AccountService.registerUser()
+  → PasswordUtil.encodePassword() → BCrypt 10 rounds
+  → AccountRepository.save() → INSERT INTO accounts
+  → ParentRepository.save() → INSERT INTO parents (auto-generated name if omitted)
   → SessionRepository.save() → INSERT INTO sessions (30 day expiry)
-  ← 201 { userId, sessionId, loginId }
+  ← 201 { accountId, parentId, parentName, sessionId, loginId }
 ```
 
 ### POST /api/auth/signin
 ```
-Client → signin(loginId, password) → UserService.authenticateUser()
-  → UserRepository.findByLoginId()
-  → PasswordUtil.verifyPassword() → BCrypt compare
-  → SessionRepository.save() → INSERT INTO sessions (30 day expiry)
-  ← 200 { userId, sessionId, loginId }
-  ← 401 { error } if loginId not found OR password wrong
+Client → AuthController → AccountService.authenticateUser()
+  → AccountRepository.findByLoginId()
+  → PasswordUtil.matches() → BCrypt compare
+  → If 1 parent: auto-select + create session
+  → If 2+ parents + no parentId: return parent list
+  → If parentId provided: validate + create session for that parent
+  ← 200 { sessionId, parentId, parentName } OR { requiresParentSelection, parents[] }
+  ← 401 if credentials wrong
 ```
 
 ### POST /api/auth/signout
 ```
-Client → signout(sessionId) → UserService.signOut()
+Client → AuthController → AccountService.signOut()
   → SessionRepository.findBySessionIdAndIsActiveTrue()
   → session.isActive = false → SessionRepository.save()
-  ← 200 { userId, sessionId, loginId }
-  ← 401 if session not found or inactive
+  ← 200 { message }
 ```
 
 ### POST /api/auth/validate
 ```
-Client → validate(sessionId) → UserService.validateSession()
+Client → AuthController → AccountService.validateSession()
   → SessionRepository.findBySessionIdAndIsActiveTrueAndExpiresAtAfter()
-  ← 200 { userId, loginId, valid: true }
-  ← 401 { valid: false, error }
+  → AccountRepository.findById()
+  → ParentRepository.findById()
+  ← 200 { accountId, loginId, parentId, parentName, isValid: true }
+  ← 401 if invalid
+```
+
+### POST /api/parents (auth required)
+```
+Client → ParentController → ParentService.addParent()
+  → SessionRepository.findBySessionIdAndIsActiveTrue() [validate session]
+  → ParentRepository.save() → INSERT INTO parents
+  ← 201 { parentId, accountId, name }
+```
+
+### GET /api/students (auth required)
+```
+Client → StudentController → StudentService.listStudents()
+  → SessionRepository.findBySessionIdAndIsActiveTrue() [validate session]
+  → StudentRepository.findByAccountId() → SELECT from students
+  ← 200 [{ studentId, name, gender, birthYear, studentClass }]
 ```
 
 ## Database Schema
 
-### users
-| Column       | Type         | Notes                    |
-|-------------|--------------|--------------------------|
-| user_id     | VARCHAR(36)  | UUID, PK                 |
-| login_id    | VARCHAR(100) | UNIQUE, email or phone   |
-| password_hash| VARCHAR(255)| BCrypt hash, 10 rounds   |
-| created_at  | BIGINT       | epoch millis             |
-| updated_at  | BIGINT       | epoch millis             |
+### accounts
+| Column | Type | Notes |
+|--------|------|-------|
+| account_id | UUID | PK |
+| login_id | VARCHAR(255) | UNIQUE, email or phone |
+| password_hash | VARCHAR(255) | BCrypt hash, 10 rounds |
+| created_at | BIGINT | epoch millis |
+| updated_at | BIGINT | epoch millis |
+
+### parents
+| Column | Type | Notes |
+|--------|------|-------|
+| parent_id | UUID | PK |
+| account_id | UUID | FK → accounts |
+| name | VARCHAR(100) | auto-generated if omitted |
+| created_at | BIGINT | |
+| updated_at | BIGINT | |
+
+### students
+| Column | Type | Notes |
+|--------|------|-------|
+| student_id | UUID | PK |
+| account_id | UUID | FK → accounts |
+| name | VARCHAR(100) | NOT NULL |
+| gender | VARCHAR(10) | MALE / FEMALE / OTHER |
+| birth_year | INT | |
+| class | VARCHAR(50) | "Nursery", "Junior KG", etc. |
+| created_at | BIGINT | |
+| updated_at | BIGINT | |
 
 ### sessions
-| Column      | Type         | Notes                          |
-|-------------|--------------|--------------------------------|
-| session_id  | VARCHAR(36)  | UUID, PK                       |
-| user_id     | VARCHAR(36)  | FK → users.user_id             |
-| is_active   | BOOLEAN      | soft-delete flag               |
-| expires_at  | BIGINT       | epoch millis, 30 days from now |
+| Column | Type | Notes |
+|--------|------|-------|
+| session_id | UUID | PK |
+| account_id | UUID | FK → accounts |
+| parent_id | UUID | FK → parents |
+| is_active | BOOLEAN | soft-delete flag, default true |
+| created_at | BIGINT | |
+| expires_at | BIGINT | epoch millis, 30 days from now |
 
 ## Key Design Decisions
 
-- **loginId** — Single field for email or phone (not separate columns)
+- **Account + Parent split** — `loginId` lives on `Account` (shared by multiple parents). Parent profiles are separate entities with their own IDs.
+- **Auto-generated parent names** — `awesome-parent-{6char}` when name is omitted, changeable later via `PUT /api/parents/me`
+- **Two-phase signin** — When multiple parents exist, returns parent list without creating a session. Client retries with `parentId` to complete signin.
+- **Session tied to Parent** — Each session records which parent authenticated, enabling per-parent identification.
 - **Soft-delete for sessions** — `isActive = false` instead of hard delete
 - **Generic 401** — Never reveals whether loginId exists
-- **Manual UUIDs** — No `@GeneratedValue` on sessionId to avoid Hibernate overriding
-- **Long timestamps** — Epoch millis instead of SQL TIMESTAMP (simpler, no timezone issues)
-- **Main class** in `com.studyshield` — Sub-packages scanned automatically by Spring Boot
+- **Manual UUIDs** — No `@GeneratedValue` on sessionId/parentId/studentId to avoid Hibernate overriding
+- **Long timestamps** — Epoch millis instead of SQL TIMESTAMP
+- **Manual Bearer auth** — Bearer tokens validated in controller/service layer (not Spring Security)
+- **Static class config** — `class-config.json` loaded at runtime, editable without code changes
 
 ## Security
 
 - BCrypt with 10 salt rounds for password hashing
-- Spring Security permits `/api/auth/**` unauthenticated (these ARE the auth endpoints)
+- Spring Security permits all API endpoints (auth is manual via Bearer token validation in the service layer)
 - CSRF disabled (stateless API)
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`

@@ -1,2 +1,3 @@
 rootProject.name = 'study-shield-user-service'
 include 'api'
+include 'qa'
