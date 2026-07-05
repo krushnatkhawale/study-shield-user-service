@@ -1,0 +1,30 @@
+@startuml
+title Database Schema — Users & Sessions
+
+!define table(x) entity x <<table>>
+
+table(users) {
+  * id : UUID <<PK>>
+  --
+  * login_id : VARCHAR(255) <<UNIQUE, INDEX>>
+  * password_hash : VARCHAR(255)
+  created_at : BIGINT
+  updated_at : BIGINT
+}
+
+table(sessions) {
+  * session_id : UUID <<PK, INDEX>>
+  --
+  * user_id : UUID <<FK, INDEX>>
+  * is_active : BOOLEAN <<INDEX>> (default true)
+  created_at : BIGINT
+  * expires_at : BIGINT <<INDEX>>
+}
+
+users ||--o{ sessions : "user_id → id"
+
+note top of users : @Entity\n@Table(name = "users")
+note top of sessions : @Entity\n@Table(name = "sessions")
+note right of sessions : is_active = false means\nsession is invalidated\n(soft delete)
+
+@enduml

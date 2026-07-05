@@ -1,0 +1,35 @@
+@startuml
+title US-003: User Sign-Out Flow
+
+actor "Client" as client
+participant "UserController" as ctrl
+participant "UserService" as svc
+database "Database" as db
+
+== Request Parsing ==
+client -> ctrl: POST /api/auth/signout\nAuthorization: Bearer {sessionId}\nor body { "sessionId": "..." }
+
+ctrl -> ctrl: Extract sessionId from header OR body
+
+alt No sessionId found
+    ctrl --> client: 400 Bad Request\nMISSING_SESSION_ID
+end
+
+== Session Deactivation ==
+ctrl -> svc: signOut(sessionId)
+svc -> db: findBySessionIdAndIsActiveTrue(sessionId)
+
+alt Session not found / inactive
+    svc --> ctrl: throw RegistrationException\nINVALID_SESSION
+    ctrl --> client: 401 Unauthorized\n{ errorCode, message }
+end
+
+svc -> db: set isActive = false\nsessionRepository.save(session)
+
+== Response ==
+svc --> ctrl: void (success)
+ctrl --> client: 200 OK\n{ message: "Sign out successful" }
+
+note right of db: Soft delete —\nsession history preserved
+
+@enduml

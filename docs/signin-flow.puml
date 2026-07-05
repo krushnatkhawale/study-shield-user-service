@@ -1,0 +1,43 @@
+@startuml
+title US-002: User Sign-In Flow
+
+actor "Client" as client
+participant "UserController" as ctrl
+participant "UserService" as svc
+participant "PasswordUtil" as pwd
+database "Database" as db
+
+== Validation ==
+client -> ctrl: POST /api/auth/signin\n{ loginId, password }
+ctrl -> ctrl: Validate loginId and password present
+
+alt Missing fields
+    ctrl --> client: 400 Bad Request\nMISSING_FIELDS
+end
+
+== Authentication ==
+ctrl -> svc: authenticateUser(loginId, password)
+svc -> db: findByLoginId(loginId)
+
+alt User not found
+    svc --> ctrl: throw RegistrationException\nINVALID_CREDENTIALS
+    ctrl --> client: 401 Unauthorized\n(generic message)
+end
+
+svc -> pwd: matches(password, hash)
+pwd --> svc: true / false
+
+alt Password mismatch
+    svc --> ctrl: throw RegistrationException\nINVALID_CREDENTIALS
+    ctrl --> client: 401 Unauthorized\n(generic message)
+end
+
+== Session Creation ==
+svc -> svc: Generate new UUID sessionId
+svc -> db: save(Session{sessionId, userId, expiresAt+30d})
+
+== Response ==
+svc --> ctrl: SessionResponse
+ctrl --> client: 200 OK\n{ userId, loginId, sessionId, message }
+
+@enduml

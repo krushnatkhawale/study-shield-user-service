@@ -1,0 +1,41 @@
+@startuml
+title US-004: Session Validation Flow
+
+actor "Client" as client
+participant "UserController" as ctrl
+participant "UserService" as svc
+database "Database" as db
+
+== Request ==
+client -> ctrl: POST /api/auth/validate\nAuthorization: Bearer {sessionId}
+
+ctrl -> ctrl: Parse Authorization header
+
+alt Missing / malformed header
+    ctrl --> client: 400 Bad Request\nBAD_HEADER
+end
+
+ctrl -> ctrl: Parse UUID from token
+
+alt Invalid UUID format
+    ctrl --> client: 400 Bad Request\nBAD_HEADER
+end
+
+== Validation ==
+ctrl -> svc: validateSession(sessionId)
+svc -> db: findBySessionIdAndIsActiveTrueAndExpiresAtAfter(sessionId, now)
+
+alt Not found (invalid / expired / inactive)
+    svc --> ctrl: throw RegistrationException\nINVALID_SESSION
+    ctrl --> client: 401 Unauthorized\n{ errorCode, message }
+end
+
+svc -> db: findById(session.userId)
+
+== Response ==
+svc --> ctrl: ValidationResponse{userId, loginId, isValid=true}
+ctrl --> client: 200 OK\n{ userId, loginId, isValid, message }
+
+note right of db: Checks:\n1. sessionId exists\n2. is_active = true\n3. expires_at > now
+
+@enduml
